@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090c14">
+<title>KYZEN Control Center — v1.4 Smart Workspace</title>
+<style>
+:root{color-scheme:dark;--bg:#090c14;--panel:#111725;--panel2:#151d2d;--line:#273248;--text:#edf2ff;--muted:#98a4bb;--blue:#91a8ff;--purple:#a889f5;--green:#65d6a7;--amber:#f2c477}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+body{overflow-x:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+.shell{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:250px;padding:24px 16px;background:#0d121e;border-right:1px solid var(--line);z-index:50;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 28px}
+.brand-mark{width:44px;height:44px;border-radius:15px;background:linear-gradient(140deg,#a8b8ff,#8267e8);display:grid;place-items:center;color:#11172b;font-weight:900;font-size:22px;box-shadow:0 8px 26px #8095ff40,inset 0 1px 0 #ffffff8c}
+.brand-name{font-weight:800;letter-spacing:2.4px;font-size:16px}
+.brand-sub{font-size:9px;color:#8793ae;letter-spacing:3px;margin-top:4px}
+.nav-label{font-size:10px;letter-spacing:2px;color:#74819b;font-weight:800;padding:13px 12px 8px}
+.nav-item{height:46px;display:flex;align-items:center;gap:12px;padding:0 13px;border-radius:12px;color:#a7b1c5;margin:4px 0;border:1px solid transparent;transition:background .18s,border-color .18s,color .18s}
+.nav-item .symbol{width:20px;text-align:center;color:#9baad0;font-size:16px}
+.nav-item.active{color:#f4f6ff;background:linear-gradient(100deg,#829cff26,#a88bf51a);border-color:#839aff28;box-shadow:inset 3px 0 #9ab0ff}
+.nav-item:focus-visible,.menu-button:focus-visible,.action:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.sidebar-foot{position:absolute;bottom:18px;left:28px;color:#68758e;font-size:10px;letter-spacing:.4px}
+.main{margin-left:250px;min-width:0;padding:25px 30px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:34px}
+.top-left{display:flex;align-items:center;gap:13px;min-width:0}
+.menu-button{display:none;width:46px;height:46px;border:1px solid #8fa3ff55;border-radius:15px;background:linear-gradient(145deg,#a8b8ff,#8267e8);color:#10162b;font-size:21px;font-weight:900;box-shadow:0 7px 22px #8095ff35;align-items:center;justify-content:center}
+.breadcrumb{font-size:12px;color:var(--muted)}
+.top-actions{display:flex;align-items:center;gap:9px}
+.search{width:min(290px,32vw);height:43px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:0 13px;color:var(--text);outline:none}
+.search:focus{border-color:#829aff}
+.icon-button{width:43px;height:43px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font-size:17px}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#687dc2,#9d75cb);font-weight:800}
+h1{font-size:27px;letter-spacing:-.8px;margin:0 0 6px}
+.subtitle{color:var(--muted);margin:0 0 22px;font-size:14px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.action{border:1px solid var(--line);border-radius:12px;padding:11px 15px;background:var(--panel);color:var(--text)}
+.action.primary{background:linear-gradient(110deg,#718aff,#9a72e6);border:0;color:white;box-shadow:0 8px 22px #8095ff35}
+.status{border:1px solid #4cc99b35;background:#4cc99b12;color:var(--green);padding:8px 12px;border-radius:30px;font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px 0}
+.card{background:linear-gradient(145deg,#141b2b,#101522);border:1px solid var(--line);border-radius:17px;padding:18px;min-width:0;box-shadow:0 12px 32px #0002}
+.metric-label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.metric{font-size:28px;font-weight:780;letter-spacing:-1px;margin:14px 0 4px}
+.metric-note{font-size:11px;color:var(--green)}
+.metric-note.warn{color:var(--amber)}
+.content-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.chart{height:170px;display:flex;align-items:end;gap:12px;padding:10px 4px 0;background:repeating-linear-gradient(to bottom,transparent 0 40px,#263147 41px,#263147 42px);border-bottom:1px solid var(--line)}
+.bar{flex:1;max-width:40px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#a98af5,#718cff)}
+.chart-labels{display:flex;justify-content:space-between;color:#8290aa;font-size:10px;padding-top:9px}
+.health-row{display:flex;align-items:center;gap:10px;margin:15px 0;color:#c5cde0;font-size:12px}
+.health-row .health-name{flex:1}
+.health-dot{width:7px;height:7px;background:var(--green);border-radius:50%}
+.track{height:5px;background:#252e42;border-radius:8px;margin-top:7px;overflow:hidden}
+.track i{height:100%;display:block;background:linear-gradient(90deg,#728cff,#a98af5);border-radius:8px}
+.activity{border-left:1px solid #35405a;margin-left:5px;padding-left:17px}
+.event{position:relative;margin:0 0 18px;font-size:12px}
+.event:before{content:"";position:absolute;left:-22px;top:4px;width:8px;height:8px;border-radius:50%;background:#93a7ff;box-shadow:0 0 0 4px #8197ff20}
+.event small{display:block;color:var(--muted);margin-top:4px}
+.section{display:none}.section.visible{display:block}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:400px}
+th{text-align:left;color:#8996b0;font-size:10px;letter-spacing:1px;padding:11px 8px;border-bottom:1px solid var(--line)}
+td{padding:13px 8px;border-bottom:1px solid #222c40}
+.pill{font-size:10px;padding:4px 8px;border-radius:20px;background:#52d4a51a;color:var(--green)}
+.pill.pending{background:#f2c4771a;color:var(--amber)}
+.feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.feature{min-height:130px}
+.feature-icon{font-size:21px;margin-bottom:12px;color:#a9b7ff}
+.feature h3{font-size:14px;margin:0 0 6px}
+.feature p{font-size:12px;color:var(--muted);margin:0}
+.backdrop{display:none}
+.drawer-close{display:none}
+.toast{position:fixed;bottom:22px;right:22px;z-index:100;background:#1b2436;border:1px solid #3a4967;color:#f3f5ff;padding:12px 16px;border-radius:12px;display:none;box-shadow:0 12px 35px #0008}
+
+.app-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:20px 0}
+.app-card{background:linear-gradient(145deg,#151e30,#101624);border:1px solid #2b3851;border-radius:16px;padding:16px;min-width:0}
+.app-card-head{display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.app-logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#a9b9ff,#8168e8);color:#10162b;font-weight:900;font-size:18px}
+.app-name{font-weight:750;font-size:13px}.app-package{font-size:10px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.app-kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app-kpi small{display:block;color:var(--muted);font-size:10px}.app-kpi b{display:block;font-size:19px;margin-top:3px}
+.app-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.mini-action{font-size:10px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#192337;color:#dce5ff}
+.app-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:15px 0}
+.app-toolbar input,.app-toolbar select{background:#141d2d;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text)}
+.key-meter{height:6px;border-radius:9px;background:#29344a;overflow:hidden;margin-top:7px}.key-meter i{height:100%;display:block;background:linear-gradient(90deg,#728cff,#a98af5)}
+@media(max-width:1000px){.app-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.app-summary{grid-template-columns:1fr}.app-card{padding:14px}}
+\n@media(max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:22px}.content-grid{grid-template-columns:1fr}}
+@media(max-width:700px){
+ .sidebar{width:min(84vw,340px);transform:translateX(-105%);transition:transform .25s ease;box-shadow:20px 0 60px #0009;padding-top:23px}
+ .sidebar.open{transform:translateX(0)}
+ .backdrop.open{display:block;position:fixed;inset:0;background:#02040bbd;backdrop-filter:blur(3px);z-index:40}
+ .drawer-close{display:grid;place-items:center;margin-left:auto;width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:#171f30;color:#b9c4da;font-size:20px}
+ .brand{padding-bottom:24px}
+ .main{margin-left:0;padding:0 15px 30px}
+ .topbar{position:sticky;top:0;z-index:30;margin:0 -15px 25px;padding:12px 15px;background:#090c14f2;border-bottom:1px solid #252f43;backdrop-filter:blur(16px)}
+ .menu-button{display:flex;flex:0 0 46px}
+ .breadcrumb{font-size:10px}
+ .search{width:min(37vw,175px);height:40px;font-size:11px}
+ .icon-button{width:40px;height:40px}
+ .avatar{width:36px;height:36px}
+ h1{font-size:24px}
+ .cards{gap:10px;margin-top:18px}
+ .card{padding:15px;border-radius:15px}
+ .metric{font-size:24px}
+ .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:390px){.top-actions{gap:6px}.search{width:32vw;padding:0 9px}.icon-button{width:36px;height:36px}.menu-button{width:42px;height:42px;flex-basis:42px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{font-size:22px}}
+
+/* v1.3 dashboard + user intelligence */
+.dash-extra{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:14px}
+.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.quick-tile{border:1px solid var(--line);background:#182238;border-radius:13px;padding:13px;text-align:left;color:var(--text);min-height:82px}
+.quick-tile b{display:block;font-size:12px;margin-top:8px}.quick-tile span{font-size:19px;color:#aebcff}
+.mini-list{display:grid;gap:13px}.mini-line{display:flex;align-items:center;gap:10px;font-size:12px}.mini-line .grow{flex:1}.mini-line small{color:var(--muted)}
+.progress{height:6px;border-radius:9px;background:#273249;overflow:hidden;margin-top:6px}.progress i{height:100%;display:block;border-radius:9px;background:linear-gradient(90deg,#748dff,#ad8df6)}
+.user-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:16px 0}
+.user-toolbar input,.user-toolbar select{background:#111a2a;border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--text);min-width:150px}
+.user-profile{display:flex;align-items:center;gap:9px;min-width:155px}.user-avatar{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#718aff,#a27be8);font-weight:800}
+.user-actions{display:flex;gap:6px}.mini-action{border:1px solid var(--line);border-radius:9px;background:#182238;color:#dce4ff;padding:7px 9px;font-size:11px}
+.user-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.user-kpi{background:linear-gradient(145deg,#151e30,#101624);border:1px solid var(--line);border-radius:14px;padding:15px}
+.user-kpi small{color:var(--muted);font-size:11px}.user-kpi b{display:block;font-size:23px;margin-top:7px}
+.filter-chip{border:1px solid var(--line);border-radius:20px;padding:7px 11px;color:#b9c5e0;background:#141d2d;font-size:11px}
+.filter-chip.active{background:#8197ff22;border-color:#8197ff88;color:#e9edff}
+.table-note{color:var(--muted);font-size:11px;margin-top:12px}
+@media(max-width:900px){.dash-extra{grid-template-columns:1fr}.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.user-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.user-toolbar input{width:100%}.user-toolbar select{flex:1}.user-kpis{gap:8px}.user-kpi{padding:12px}.user-kpi b{font-size:20px}}
+
+
+/* KYZEN v1.4 Smart Workspace additions */
+:root{--glass:rgba(20,28,44,.78);--focus:#a8b8ff}
+.nav-item{cursor:pointer}
+.nav-item:hover{background:#182238;color:#f4f6ff}
+button,input,select{transition:border-color .18s,background .18s,transform .18s}
+button:active{transform:translateY(1px)}
+:focus-visible{outline:2px solid var(--focus)!important;outline-offset:3px}
+.top-actions .search{width:min(260px,27vw)}
+.top-actions .icon-button[aria-label]{position:relative}
+.v14-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-15px 0 18px}
+.v14-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:11px;padding:9px 12px;font-size:12px}
+.v14-chip:hover,.mini-action:hover,.action:hover{border-color:#829aff;background:#1b2740}
+.demo-tag{font-size:10px;color:#f2c477;border:1px solid #f2c47755;background:#f2c47712;border-radius:20px;padding:5px 8px}
+.command-overlay,.v14-modal-backdrop{position:fixed;inset:0;background:#03050bc9;backdrop-filter:blur(10px);z-index:150;display:none;align-items:flex-start;justify-content:center;padding:12vh 16px 20px}
+.command-overlay.open,.v14-modal-backdrop.open{display:flex}
+.command-box,.v14-modal{width:min(620px,100%);background:#111827;border:1px solid #394761;border-radius:18px;box-shadow:0 24px 90px #000b;overflow:hidden}
+.command-box input{width:100%;padding:18px 20px;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--text);outline:none;font-size:15px}
+.command-list{padding:8px;max-height:48vh;overflow:auto}
+.command-item{display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;color:#eaf0ff;cursor:pointer;font-size:13px}
+.command-item:hover,.command-item:focus{background:#25324b;outline:none}
+.command-item small{color:var(--muted)}
+.v14-modal{padding:20px;max-height:75vh;overflow:auto}
+.v14-modal h2{font-size:18px;margin:0 0 7px}
+.v14-modal p{color:var(--muted);font-size:13px;line-height:1.55}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.quick-dock{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;gap:7px;padding:8px;border:1px solid #52617d88;border-radius:16px;background:rgba(15,22,36,.88);backdrop-filter:blur(18px);box-shadow:0 12px 38px #0008}
+.quick-dock button{width:40px;height:40px;border:1px solid #34415a;border-radius:12px;background:#1a263b;color:#eaf0ff;font-size:16px}
+.quick-dock button:hover{background:#293858;border-color:#829aff}
+.widget-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+.widget-option{padding:13px;border:1px solid var(--line);border-radius:12px;background:#172238;color:var(--text);font-size:12px}
+.widget-option input{accent-color:#8fa5ff;margin-right:7px}
+.compact .main{padding-top:16px}
+.compact .card{padding:13px;border-radius:13px}
+.compact .cards{gap:9px;margin:14px 0}
+.compact .metric{margin:8px 0 3px;font-size:24px}
+.compact .topbar{margin-bottom:22px}
+body.light{--bg:#eef1f8;--panel:#fff;--panel2:#f6f8fc;--line:#d9dfeb;--text:#182238;--muted:#64718a;color:var(--text);background:var(--bg);color-scheme:light}
+body.light .sidebar{background:#f9faff}
+body.light .main{color:var(--text)}
+body.light .card,body.light .app-card,body.light .user-kpi{background:linear-gradient(145deg,#fff,#f5f7fc);box-shadow:0 8px 24px #24375b0c}
+body.light .topbar{background:#eef1f8ed}
+body.light .search,body.light .icon-button,body.light .action,body.light .user-toolbar input,body.light .user-toolbar select,body.light .app-toolbar input,body.light .app-toolbar select{background:#fff;color:#182238}
+body.light .nav-item{color:#4c5870}
+body.light .nav-item.active{color:#182238;background:#e8edff}
+body.light .quick-tile,body.light .mini-action,body.light .filter-chip{background:#f0f3fb;color:#25314a}
+body.light .table-wrap{color:#182238}
+body.light td{border-bottom-color:#e5e9f1}
+body.light .command-box,body.light .v14-modal{background:#fff;color:#182238}
+body.light .command-item{color:#182238}
+body.light .quick-dock{background:#ffffffdf}
+body.light .quick-dock button{background:#f1f4fb;color:#182238}
+@media(max-width:700px){.v14-tools{margin-top:-10px}.quick-dock{right:10px;bottom:10px}.quick-dock button{width:38px;height:38px}.command-overlay,.v14-modal-backdrop{padding-top:8vh}.widget-options{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="backdrop" id="backdrop" onclick="closeMenu()"></div>
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+ <div class="brand">
+  <div class="brand-mark">K</div>
+  <div><div class="brand-name">KYZEN</div><div class="brand-sub">CONTROL CENTER</div></div>
+  <button class="drawer-close" onclick="closeMenu()" aria-label="Close navigation">×</button>
+ </div>
+ <div class="nav-label">MAIN MENU</div>
+ <div class="nav-item active" data-page="dashboard"><span class="symbol">◇</span>Dashboard</div>
+ <div class="nav-item" data-page="users"><span class="symbol">♙</span>Users</div>
+ <div class="nav-item" data-page="licenses"><span class="symbol">✧</span>Licenses</div>
+ <div class="nav-item" data-page="devices"><span class="symbol">▣</span>Devices</div>
+ <div class="nav-item" data-page="app"><span class="symbol">⚙</span>App control</div>
+ <div class="nav-item" data-page="intelligence"><span class="symbol">▦</span>App Intelligence</div>
+ <div class="nav-item" data-page="notifications"><span class="symbol">◇</span>Notifications</div>
+ <div class="nav-item" data-page="support"><span class="symbol">▤</span>Support tickets</div>
+ <div class="nav-item" data-page="roles"><span class="symbol">♧</span>Admin roles</div>
+ <div class="nav-item" data-page="activity"><span class="symbol">◷</span>Live activity</div>
+ <div class="nav-item" data-page="analytics"><span class="symbol">▥</span>Analytics & reports</div>
+ <div class="nav-item" data-page="backup"><span class="symbol">⇩</span>Database backup</div>
+ <div class="nav-label">SECURITY & SYSTEM</div>
+ <div class="nav-item" data-page="security"><span class="symbol">⬡</span>Security center</div>
+ <div class="nav-item" data-page="settings"><span class="symbol">⚙</span>System settings</div>
+ <div class="sidebar-foot">KYZEN v1.2 · App Intelligence preview</div>
+</aside>
+<div class="main">
+ <header class="topbar">
+  <div class="top-left">
+   <button class="menu-button" onclick="toggleMenu()" aria-label="Open menu">K</button>
+   <div class="breadcrumb">Workspace / <span id="currentPage">Dashboard</span></div>
+  </div>
+  <div class="top-actions">
+   <input class="search" id="search" placeholder="⌕ Search · Ctrl K" aria-label="Search pages" onkeydown="if(event.key==='Enter')searchPage(this.value)">
+   <button class="icon-button" onclick="toast('Theme control will be connected in backend')">◐</button>
+   <button class="icon-button" onclick="toast('No new notifications')">♧</button>
+   <div class="avatar">AD</div>
+  </div>
+ </header>
+ <section class="section visible" id="dashboard">
+  <h1>Welcome back, Admin</h1><p class="subtitle">Your KYZEN platform at a glance. Monitor growth, users and system activity.</p>
+  <div class="toolbar"><button class="action primary" onclick="toast('Quick action center opened')">＋ Quick action</button><button class="action" onclick="toast('Dashboard layout preferences preview')">▦ Customize</button><span class="status">● Sample status · demo only</span></div>
+  <div class="cards">
+   <div class="card"><div class="metric-label">Total users <span>♙</span></div><div class="metric">24,892</div><div class="metric-note">↑ 12.8% vs last month</div></div>
+   <div class="card"><div class="metric-label">Active today <span>◉</span></div><div class="metric">3,684</div><div class="metric-note">↑ 8.4% vs yesterday</div></div>
+   <div class="card"><div class="metric-label">Active licenses <span>◇</span></div><div class="metric">18,420</div><div class="metric-note">↑ 5.2% this month</div></div>
+   <div class="card"><div class="metric-label">Pending reviews <span>◷</span></div><div class="metric">128</div><div class="metric-note warn">Needs attention</div></div>
+  </div>
+  <div class="content-grid">
+   <div class="card"><div class="card-title">Platform growth <span class="filter-chip active">Last 7 months</span></div><div class="chart"><div class="bar" style="height:35%"></div><div class="bar" style="height:48%"></div><div class="bar" style="height:43%"></div><div class="bar" style="height:62%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:78%"></div><div class="bar" style="height:94%"></div></div><div class="chart-labels"><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div></div>
+   <div class="card"><div class="card-title">System health <span class="status">Healthy</span></div><div class="health-row"><span class="health-name">API response</span><b>98%</b></div><div class="track"><i style="width:98%"></i></div><div class="health-row"><span class="health-name">Database</span><b>92%</b></div><div class="track"><i style="width:92%"></i></div><div class="health-row"><span class="health-name">Storage</span><b>64%</b></div><div class="track"><i style="width:64%"></i></div><div class="health-row"><span class="health-name">Queue health</span><b>99%</b></div><div class="track"><i style="width:99%"></i></div></div>
+  </div>
+  <div class="dash-extra">
+   <div class="card"><div class="card-title">Admin quick launch <span class="filter-chip">Shortcuts</span></div><div class="quick-grid">
+    <button class="quick-tile" onclick="openPage('users')"><span>♙</span><b>Manage users</b></button>
+    <button class="quick-tile" onclick="openPage('licenses')"><span>◇</span><b>License center</b></button>
+    <button class="quick-tile" onclick="openPage('security')"><span>⬡</span><b>Security center</b></button>
+    <button class="quick-tile" onclick="openPage('analytics')"><span>▥</span><b>View reports</b></button>
+   </div></div>
+   <div class="card"><div class="card-title">User activity snapshot <span class="filter-chip">Today</span></div><div class="mini-list">
+    <div class="mini-line"><span class="grow">New registrations</span><b>+284</b></div><div class="progress"><i style="width:78%"></i></div>
+    <div class="mini-line"><span class="grow">Returning users</span><b>2,410</b></div><div class="progress"><i style="width:66%"></i></div>
+    <div class="mini-line"><span class="grow">Pending verification</span><b>36</b></div><div class="progress"><i style="width:24%"></i></div>
+    <div class="mini-line"><span class="grow">Blocked / flagged</span><b>12</b></div><div class="progress"><i style="width:8%"></i></div>
+   </div></div>
+  </div>
+  <div class="content-grid">
+   <div class="card"><div class="card-title">Recent users <button class="action" style="padding:7px 10px;font-size:11px" onclick="openPage('users')">View all →</button></div><div class="table-wrap"><table><thead><tr><th>USER</th><th>PLAN</th><th>STATUS</th></tr></thead><tbody><tr><td>Aarav Rao</td><td>Pro</td><td><span class="pill">Active</span></td></tr><tr><td>Meera Shah</td><td>Basic</td><td><span class="pill">Active</span></td></tr><tr><td>Vihaan Kumar</td><td>Pro</td><td><span class="pill pending">Pending</span></td></tr></tbody></table></div></div>
+   <div class="card"><div class="card-title">Live admin feed <span class="status">Demo feed</span></div><div class="activity"><div class="event">New user registered<small>2 min ago · User onboarding</small></div><div class="event">License activated<small>14 min ago · KYZEN Client</small></div><div class="event">Profile verification pending<small>28 min ago · Review required</small></div></div></div>
+  </div>
+  <p class="table-note">Preview data is illustrative. Connect the secure PHP/MySQL backend to display live platform metrics.</p>
+ </section>
+ <section class="section" id="users">
+  <h1>User Management</h1><p class="subtitle">A smarter user directory with account health, access status and quick administration tools.</p>
+  <div class="toolbar"><button class="action primary" onclick="toast('Add-user form requires backend validation')">＋ Add user</button><button class="action" onclick="toast('CSV export will be connected to the backend')">⇩ Export CSV</button><button class="action" onclick="KYZEN.bulkAction()">Bulk actions</button><span class="status">● User services online</span></div>
+  <div class="user-kpis">
+   <div class="user-kpi"><small>Total accounts</small><b>24,892</b><span class="metric-note">↑ 12.8% monthly</span></div>
+   <div class="user-kpi"><small>Active users</small><b>21,406</b><span class="metric-note">86% of accounts</span></div>
+   <div class="user-kpi"><small>Pending verification</small><b>284</b><span class="metric-note warn">Review queue</span></div>
+   <div class="user-kpi"><small>Suspended accounts</small><b>38</b><span class="metric-note warn">Access restricted</span></div>
+  </div>
+  <div class="card">
+   <div class="card-title">User directory <span class="filter-chip">24,892 records · sample</span></div>
+   <div class="user-toolbar"><input id="userSearch" placeholder="Search name, email or ID..." oninput="filterUsers()"><select id="userStatus" onchange="filterUsers()"><option value="all">All statuses</option><option value="Active">Active</option><option value="Pending">Pending</option><option value="Suspended">Suspended</option></select><select id="userRole" onchange="filterUsers()"><option value="all">All roles</option><option value="Customer">Customer</option><option value="VIP">VIP</option><option value="Tester">Tester</option></select></div>
+   <div class="table-wrap"><table id="usersTable"><thead><tr><th><input type="checkbox" aria-label="Select all sample users" onchange="KYZEN.selectAll(this.checked)"></th><th>USER</th><th>ROLE</th><th>DEVICE</th><th>LAST ACTIVE</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+    <tr data-status="Active" data-role="Customer"><td><div class="user-profile"><span class="user-avatar">AR</span><span><b>Aarav Rao</b><br><small>aarav@example.com · U-1024</small></span></div></td><td>Customer</td><td>Android</td><td>2 min ago</td><td><span class="pill">Active</span></td><td><div class="user-actions"><button class="mini-action" onclick="toast('User profile preview')">View</button><button class="mini-action" onclick="toast('Account action requires admin permission')">Manage</button></div></td></tr>
+    <tr data-status="Active" data-role="VIP"><td><div class="user-profile"><span class="user-avatar">MS</span><span><b>Meera Shah</b><br><small>meera@example.com · U-1025</small></span></div></td><td>VIP</td><td>Web</td><td>18 min ago</td><td><span class="pill">Active</span></td><td><div class="user-actions"><button class="mini-action" onclick="toast('User profile preview')">View</button><button class="mini-action" onclick="toast('Account action requires admin permission')">Manage</button></div></td></tr>
+    <tr data-status="Pending" data-role="Tester"><td><div class="user-profile"><span class="user-avatar">VK</span><span><b>Vihaan Kumar</b><br><small>vihaan@example.com · U-1026</small></span></div></td><td>Tester</td><td>Android</td><td>Yesterday</td><td><span class="pill pending">Pending</span></td><td><div class="user-actions"><button class="mini-action" onclick="toast('Verification review preview')">Review</button><button class="mini-action" onclick="toast('Account action requires admin permission')">Manage</button></div></td></tr>
+    <tr data-status="Suspended" data-role="Customer"><td><div class="user-profile"><span class="user-avatar">SK</span><span><b>Sana Khan</b><br><small>sana@example.com · U-1027</small></span></div></td><td>Customer</td><td>iOS</td><td>5 days ago</td><td><span class="pill pending">Suspended</span></td><td><div class="user-actions"><button class="mini-action" onclick="toast('Account review preview')">Review</button><button class="mini-action" onclick="toast('Account action requires admin permission')">Manage</button></div></td></tr>
+   </tbody></table></div>
+   <p id="userCount" class="table-note">Showing 4 sample users. Search and filters work in this preview.</p>
+  </div>
+  <div class="content-grid">
+   <div class="card"><div class="card-title">Account health</div><div class="mini-list"><div class="mini-line"><span class="grow">Verified accounts</span><b>94%</b></div><div class="progress"><i style="width:94%"></i></div><div class="mini-line"><span class="grow">Email verification pending</span><b>4%</b></div><div class="progress"><i style="width:4%"></i></div><div class="mini-line"><span class="grow">Flagged for review</span><b>2%</b></div><div class="progress"><i style="width:2%"></i></div></div></div>
+   <div class="card"><div class="card-title">User admin tools</div><div class="feature-grid"><button class="quick-tile" onclick="toast('Verification queue preview')"><span>✓</span><b>Verification queue</b></button><button class="quick-tile" onclick="toast('Device history preview')"><span>▣</span><b>Device history</b></button><button class="quick-tile" onclick="toast('User segments preview')"><span>◎</span><b>User segments</b></button></div></div>
+  </div>
+  <p class="table-note">All names, emails and counts shown here are fictional demo data. Real account changes require authenticated server-side permissions and audit logging.</p>
+ </section>
+ <section class="section" id="licenses"><h1>Licenses</h1><p class="subtitle">Issue, renew and review application licenses.</p><div class="feature-grid"><div class="card feature"><div class="feature-icon">◇</div><h3>Active licenses</h3><p>Review currently valid licenses.</p></div><div class="card feature"><div class="feature-icon">◷</div><h3>Expiry queue</h3><p>Review upcoming license expirations.</p></div><div class="card feature"><div class="feature-icon">＋</div><h3>Issue license</h3><p>Create a license with plan and duration.</p></div></div></section>
+
+ <section class="section" id="intelligence">
+  <h1>App Intelligence</h1>
+  <p class="subtitle">One place to monitor every connected app, its users and license-key usage.</p>
+  <div class="toolbar"><button class="action primary" onclick="toast('Connect app flow is a UI preview only')">＋ Connect app</button><button class="action" onclick="toast('Report export will be connected to the backend')">↓ Export report</button><span class="status">● Overview · Sample data</span></div>
+  <div class="app-summary">
+   <div class="card"><div class="metric-label">Connected apps <span>▦</span></div><div class="metric">08</div><div class="metric-note">All registered apps</div></div>
+   <div class="card"><div class="metric-label">Total users <span>♙</span></div><div class="metric">24,892</div><div class="metric-note">Across connected apps</div></div>
+   <div class="card"><div class="metric-label">Keys generated <span>◇</span></div><div class="metric">25,000</div><div class="metric-note">All-time total</div></div>
+   <div class="card"><div class="metric-label">Keys activated <span>✓</span></div><div class="metric">18,400</div><div class="metric-note">73.6% activation rate</div></div>
+  </div>
+  <div class="card" style="margin-bottom:15px">
+   <div class="card-title">License key distribution <span style="font-size:10px;color:var(--muted);font-weight:400">Sample figures</span></div>
+   <div class="app-kpis">
+    <div class="app-kpi"><small>Used keys</small><b>18,400</b><div class="key-meter"><i style="width:73.6%"></i></div></div>
+    <div class="app-kpi"><small>Unused keys</small><b>5,200</b><div class="key-meter"><i style="width:20.8%"></i></div></div>
+    <div class="app-kpi"><small>Expired keys</small><b>1,100</b><div class="key-meter"><i style="width:4.4%"></i></div></div>
+    <div class="app-kpi"><small>Revoked keys</small><b>300</b><div class="key-meter"><i style="width:1.2%"></i></div></div>
+   </div>
+  </div>
+  <div class="card">
+   <div class="card-title">Connected applications <span class="pill">8 registered</span></div>
+   <div class="app-toolbar"><input id="appFilter" placeholder="Search app name..." oninput="filterApps(this.value)"><select onchange="filterAppStatus(this.value)" id="appStatus"><option value="all">All statuses</option><option value="active">Active</option><option value="paused">Paused</option></select></div>
+   <div class="app-summary" id="appCards" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0">
+    <article class="app-card" data-app="KYZEN Client" data-status="active"><div class="app-card-head"><div class="app-logo">K</div><div><div class="app-name">KYZEN Client</div><div class="app-package">com.kyzen.client</div></div><span class="pill" style="margin-left:auto">Active</span></div><div class="app-kpis"><div class="app-kpi"><small>Total users</small><b>12,450</b></div><div class="app-kpi"><small>Active users</small><b>9,840</b></div><div class="app-kpi"><small>Keys used</small><b>9,200</b></div><div class="app-kpi"><small>Keys unused</small><b>1,800</b></div></div><div class="app-actions"><button class="mini-action" onclick="toast('App details preview')">View details</button><button class="mini-action" onclick="toast('App settings preview')">Settings</button></div></article>
+    <article class="app-card" data-app="KYZEN Mobile" data-status="active"><div class="app-card-head"><div class="app-logo">M</div><div><div class="app-name">KYZEN Mobile</div><div class="app-package">com.kyzen.mobile</div></div><span class="pill" style="margin-left:auto">Active</span></div><div class="app-kpis"><div class="app-kpi"><small>Total users</small><b>8,210</b></div><div class="app-kpi"><small>Active users</small><b>6,740</b></div><div class="app-kpi"><small>Keys used</small><b>6,800</b></div><div class="app-kpi"><small>Keys unused</small><b>1,100</b></div></div><div class="app-actions"><button class="mini-action" onclick="toast('App details preview')">View details</button><button class="mini-action" onclick="toast('App settings preview')">Settings</button></div></article>
+    <article class="app-card" data-app="KYZEN Desktop" data-status="active"><div class="app-card-head"><div class="app-logo">D</div><div><div class="app-name">KYZEN Desktop</div><div class="app-package">com.kyzen.desktop</div></div><span class="pill" style="margin-left:auto">Active</span></div><div class="app-kpis"><div class="app-kpi"><small>Total users</small><b>4,232</b></div><div class="app-kpi"><small>Active users</small><b>3,180</b></div><div class="app-kpi"><small>Keys used</small><b>2,400</b></div><div class="app-kpi"><small>Keys unused</small><b>1,500</b></div></div><div class="app-actions"><button class="mini-action" onclick="toast('App details preview')">View details</button><button class="mini-action" onclick="toast('App settings preview')">Settings</button></div></article>
+    <article class="app-card" data-app="KYZEN Beta" data-status="paused"><div class="app-card-head"><div class="app-logo">B</div><div><div class="app-name">KYZEN Beta</div><div class="app-package">com.kyzen.beta</div></div><span class="pill pending" style="margin-left:auto">Paused</span></div><div class="app-kpis"><div class="app-kpi"><small>Total users</small><b>—</b></div><div class="app-kpi"><small>Active users</small><b>—</b></div><div class="app-kpi"><small>Keys used</small><b>—</b></div><div class="app-kpi"><small>Keys unused</small><b>—</b></div></div><div class="app-actions"><button class="mini-action" onclick="toast('App details preview')">View details</button><button class="mini-action" onclick="toast('App settings preview')">Settings</button></div></article>
+   </div>
+   <p style="font-size:10px;color:var(--muted);margin:14px 0 0">Figures shown are illustrative demo data. Real counts require each app to connect through a secured API or shared backend.</p>
+  </div>
+ </section>
+\n <section class="section" id="devices"><h1>Devices</h1><p class="subtitle">Review registered devices and device activity.</p><div class="card"><div class="card-title">Device management</div><p class="subtitle">Device inventory and access controls will appear here.</p></div></section>
+ <section class="section" id="app"><h1>App control</h1><p class="subtitle">Manage app releases, settings and feature availability.</p><div class="feature-grid"><div class="card feature"><div class="feature-icon">▣</div><h3>Release management</h3><p>Track app versions and release status.</p></div><div class="card feature"><div class="feature-icon">⚑</div><h3>Feature controls</h3><p>Plan feature availability by version.</p></div></div></section>
+ <section class="section" id="notifications"><h1>Notifications</h1><p class="subtitle">Manage platform announcements and alerts.</p><div class="card"><div class="card-title">Notification center</div><p class="subtitle">Notification history and delivery status will appear here.</p></div></section>
+ <section class="section" id="support"><h1>Support tickets</h1><p class="subtitle">Review and manage customer support requests.</p><div class="card"><div class="card-title">Ticket queue</div><p class="subtitle">Ticket assignment, priority and resolution tools will appear here.</p></div></section>
+ <section class="section" id="roles"><h1>Admin roles</h1><p class="subtitle">Manage administrator roles and permissions.</p><div class="card"><div class="card-title">Role management</div><p class="subtitle">Role-based access controls will appear here.</p></div></section>
+ <section class="section" id="activity"><h1>Live activity</h1><p class="subtitle">Recent platform and administrator events.</p><div class="card"><div class="activity"><div class="event">New license activated<small>2 min ago</small></div><div class="event">Admin settings updated<small>18 min ago</small></div><div class="event">Support ticket resolved<small>34 min ago</small></div></div></div></section>
+ <section class="section" id="analytics"><h1>Analytics & reports</h1><p class="subtitle">Platform performance and usage summaries.</p><div class="feature-grid"><div class="card feature"><div class="feature-icon">▥</div><h3>Usage analytics</h3><p>Monitor user and application activity.</p></div><div class="card feature"><div class="feature-icon">⇩</div><h3>Export reports</h3><p>CSV and PDF export will be connected to the backend.</p></div></div></section>
+ <section class="section" id="backup"><h1>Database backup</h1><p class="subtitle">Review backup status and retention settings.</p><div class="card"><div class="card-title">Backup center</div><p class="subtitle">Backup creation and restore controls require secure backend integration.</p></div></section>
+ <section class="section" id="security"><h1>Security center</h1><p class="subtitle">Review account protection and security events.</p><div class="feature-grid"><div class="card feature"><div class="feature-icon">⬡</div><h3>Two-factor security</h3><p>Admin 2FA setup and verification.</p></div><div class="card feature"><div class="feature-icon">◷</div><h3>Session management</h3><p>Review and revoke active sessions.</p></div><div class="card feature"><div class="feature-icon">≋</div><h3>Audit logs</h3><p>Trace administrator actions.</p></div></div></section>
+ <section class="section" id="settings"><h1>System settings</h1><p class="subtitle">Configure platform preferences and operations.</p><div class="feature-grid"><div class="card feature"><div class="feature-icon">⚙</div><h3>General configuration</h3><p>Platform settings and environment preferences.</p></div><div class="card feature"><div class="feature-icon">☾</div><h3>Appearance</h3><p>Theme and language preferences.</p></div><div class="card feature"><div class="feature-icon">⚠</div><h3>Maintenance mode</h3><p>Controlled maintenance state and notice.</p></div></div></section>
+</div>
+
+<div class="command-overlay" id="kyzenCommandOverlay" role="dialog" aria-modal="true" aria-label="Command palette" onclick="if(event.target===this)KYZEN.closeCommand()">
+ <div class="command-box">
+  <input id="kyzenCommandInput" placeholder="Search pages, users, apps and actions..." autocomplete="off" oninput="KYZEN.renderCommands(this.value)" onkeydown="KYZEN.commandKey(event)" aria-label="Command search">
+  <div class="command-list" id="kyzenCommandList"></div>
+ </div>
+</div>
+<div class="v14-modal-backdrop" id="kyzenModalBackdrop" role="dialog" aria-modal="true" aria-label="Workspace dialog" onclick="if(event.target===this)KYZEN.closeModal()">
+ <div class="v14-modal" id="kyzenModalContent"></div>
+</div>
+<nav class="quick-dock" aria-label="Quick actions">
+ <button onclick="KYZEN.openCommand()" title="Command palette (Ctrl+K)" aria-label="Command palette">⌘</button>
+ <button onclick="openPage('users')" title="Manage users" aria-label="Manage users">♙</button>
+ <button onclick="openPage('licenses')" title="License center" aria-label="License center">◇</button>
+ <button onclick="KYZEN.toggleTheme()" title="Toggle theme" aria-label="Toggle theme">◐</button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const pageNames={dashboard:"Dashboard",intelligence:"App Intelligence",users:"Users",licenses:"Licenses",devices:"Devices",app:"App control",notifications:"Notifications",support:"Support tickets",roles:"Admin roles",activity:"Live activity",analytics:"Analytics & reports",backup:"Database backup",security:"Security center",settings:"System settings"};
+const sidebar=document.getElementById("sidebar"),backdrop=document.getElementById("backdrop");
+function toggleMenu(){const opening=!sidebar.classList.contains("open");sidebar.classList.toggle("open",opening);backdrop.classList.toggle("open",opening);document.body.style.overflow=opening?"hidden":""}
+function closeMenu(){sidebar.classList.remove("open");backdrop.classList.remove("open");document.body.style.overflow=""}
+function openPage(id){document.querySelectorAll(".section").forEach(s=>s.classList.remove("visible"));const target=document.getElementById(id);if(target)target.classList.add("visible");document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));document.getElementById("currentPage").textContent=pageNames[id]||"Dashboard";closeMenu();window.scrollTo({top:0,behavior:"instant"})}
+document.querySelectorAll(".nav-item").forEach(item=>item.addEventListener("click",()=>openPage(item.dataset.page)));
+function filterApps(value){const q=value.toLowerCase();document.querySelectorAll("#appCards .app-card").forEach(card=>card.style.display=card.dataset.app.toLowerCase().includes(q)?"":"none")}
+function filterAppStatus(value){document.querySelectorAll("#appCards .app-card").forEach(card=>card.style.display=(value==="all"||card.dataset.status===value)&&card.style.display!=="none"?"":"none");if(value==="all")filterApps(document.getElementById("appFilter").value)}
+function toast(message){const el=document.getElementById("toast");el.textContent=message;el.style.display="block";clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>el.style.display="none",2300)}
+function searchPage(value){const q=value.trim().toLowerCase();if(!q)return;const match=Object.entries(pageNames).find(([id,name])=>(id+" "+name).toLowerCase().includes(q));if(match)openPage(match[0]);else toast("No matching section found")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});
+
+function filterUsers(){
+ const q=(document.getElementById('userSearch')?.value||'').toLowerCase();
+ const status=document.getElementById('userStatus')?.value||'all';
+ const role=document.getElementById('userRole')?.value||'all';
+ const rows=[...document.querySelectorAll('#usersTable tbody tr')];let shown=0;
+ rows.forEach(row=>{const matchText=row.innerText.toLowerCase().includes(q);const matchStatus=status==='all'||row.dataset.status===status;const matchRole=role==='all'||row.dataset.role===role;const visible=matchText&&matchStatus&&matchRole;row.style.display=visible?'':'none';if(visible)shown++;});
+ const count=document.getElementById('userCount');if(count)count.textContent=`Showing ${shown} of ${rows.length} sample users. Search and filters work in this preview.`;
+}
+
+
+/* KYZEN v1.4 interactions — client-side preview only */
+const KYZEN = (() => {
+ const overlay=()=>document.getElementById('kyzenCommandOverlay');
+ const input=()=>document.getElementById('kyzenCommandInput');
+ const pages=Object.entries(pageNames).map(([id,name])=>({label:name,meta:'Open page',run:()=>openPage(id)}));
+ const actions=[
+  {label:'Customize dashboard',meta:'Workspace',run:()=>customize()},
+  {label:'Toggle light / dark theme',meta:'Appearance',run:()=>toggleTheme()},
+  {label:'Toggle compact layout',meta:'Appearance',run:()=>toggleCompact()},
+  {label:'Show sample user profile',meta:'Users · demo',run:()=>userPreview('Aarav Rao','aarav@example.com','U-1024','Customer','Android','Active')},
+  {label:'Show backend integration notes',meta:'Help',run:()=>integrationNotes()}
+ ];
+ let commandItems=[];
+ function openCommand(){overlay().classList.add('open');input().value='';renderCommands('');setTimeout(()=>input().focus(),30)}
+ function closeCommand(){overlay().classList.remove('open')}
+ function renderCommands(q){
+  const term=(q||'').trim().toLowerCase();
+  commandItems=[...pages,...actions].filter(x=>(x.label+' '+x.meta).toLowerCase().includes(term));
+  const list=document.getElementById('kyzenCommandList');
+  list.innerHTML=commandItems.length?commandItems.map((x,i)=>`<div class="command-item" tabindex="0" data-index="${i}" onclick="KYZEN.runCommand(${i})" onkeydown="if(event.key==='Enter')KYZEN.runCommand(${i})"><span>${x.label}</span><small>${x.meta}</small></div>`).join(''):'<p style="padding:12px;color:var(--muted);font-size:13px">No matching command. Try a page name or action.</p>';
+ }
+ function runCommand(i){const item=commandItems[i];if(!item)return;closeCommand();item.run()}
+ function commandKey(e){
+  if(e.key==='Escape'){closeCommand();return}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+   e.preventDefault();const els=[...document.querySelectorAll('.command-item')];if(!els.length)return;
+   const at=els.indexOf(document.activeElement);els[(at+(e.key==='ArrowDown'?1:-1)+els.length)%els.length].focus();
+  }else if(e.key==='Enter'){const first=document.querySelector('.command-item');if(first)first.click()}
+ }
+ function toggleTheme(){document.body.classList.toggle('light');const mode=document.body.classList.contains('light')?'Light':'Dark';toast(mode+' theme enabled on this device preview')}
+ function toggleCompact(){document.body.classList.toggle('compact');toast(document.body.classList.contains('compact')?'Compact layout enabled':'Comfortable layout enabled')}
+ function showModal(title,body,buttons=''){
+  const back=document.getElementById('kyzenModalBackdrop'),content=document.getElementById('kyzenModalContent');
+  content.innerHTML=`<h2>${title}</h2>${body}<div class="modal-actions">${buttons}<button class="action primary" onclick="KYZEN.closeModal()">Close</button></div>`;
+  back.classList.add('open');
+ }
+ function closeModal(){document.getElementById('kyzenModalBackdrop').classList.remove('open')}
+ function customize(){
+  showModal('Customize dashboard',
+   '<p>Choose which dashboard preview widgets are visible. This preference is temporary and is not saved to a server.</p><div class="widget-options">'+
+   ['Platform growth','System health','Admin quick launch','User activity snapshot','Recent users','Live admin feed'].map((n,i)=>`<label class="widget-option"><input type="checkbox" checked data-widget="${i}">${n}</label>`).join('')+
+   '</div>',
+   '<button class="action" onclick="KYZEN.applyWidgets()">Apply preview</button>');
+ }
+ function applyWidgets(){
+  const checks=[...document.querySelectorAll('[data-widget]')];
+  const selectors=['.content-grid','.content-grid','.dash-extra .card:first-child','.dash-extra .card:last-child','.content-grid .card:first-child','.content-grid .card:last-child'];
+  checks.forEach((c,i)=>{const el=document.querySelector('#dashboard '+selectors[i]);if(el&&i>=2)el.style.display=c.checked?'':'none'});
+  closeModal();toast('Dashboard widget visibility updated for this preview');
+ }
+ function userPreview(name,email,id,role,device,status){
+  showModal('User profile preview',`<p><b>${name}</b><br>${email} · ${id}</p><p>Role: ${role}<br>Device: ${device}<br>Status: ${status}</p><span class="demo-tag">FICTIONAL SAMPLE ACCOUNT</span><p>Account history, device sessions and verification records require a connected backend.</p>`);
+ }
+ function userManage(name){showModal('Manage account · demo',`<p>Selected account: <b>${name}</b></p><p>No account changes will be made. Live suspend, restore, role changes and verification actions must be enforced by authenticated server-side permissions and audit logs.</p>`)}
+ function selectAll(checked){document.querySelectorAll('.user-select').forEach(c=>c.checked=checked);toast(checked?'All sample rows selected':'Sample row selection cleared')}
+ function bulkAction(){
+  const selected=[...document.querySelectorAll('.user-select:checked')].length;
+  if(!selected){toast('Select at least one sample user first');return}
+  showModal('Bulk action preview',`<p>${selected} sample user row(s) selected.</p><p>This preview does not modify accounts. A live bulk action needs a server-side permission check and an explicit confirmation.</p>`,
+   '<button class="action" onclick="KYZEN.confirmDemoBulk()">Confirm demo action</button>');
+ }
+ function confirmDemoBulk(){closeModal();toast('Demo confirmation only — no accounts were changed')}
+ function integrationNotes(){
+  showModal('Backend integration required','<p><b>Demo-only:</b> dashboard metrics, charts, system health, recent activity, user directory records, app/license statistics, exports, account management, bulk actions, notifications, device inventory, roles, audit logs, backups and security controls.</p><p>Connect an authenticated API and database, enforce role permissions on the server, validate destructive actions, and log administrative changes. Theme and compact layout work locally in this page.</p>');
+ }
+ document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCommand()}
+  if(e.key==='Escape'){closeCommand();closeModal()}
+ });
+ document.addEventListener('click',e=>{
+  const btn=e.target.closest('#usersTable .user-actions button');
+  if(!btn)return;
+  const row=btn.closest('tr'),name=row?.querySelector('.user-profile b')?.textContent||'Sample user';
+  if(btn.textContent.trim()==='View'||btn.textContent.trim()==='Review'){
+   const cells=row.querySelectorAll('td');
+   const profile=row.querySelector('.user-profile');
+   const parts=profile?.innerText.split('\n')||[];
+   userPreview(parts[0]||name,parts[1]?.split(' · ')[0]||'sample@example.com',parts[1]?.split(' · ')[1]||'DEMO',cells[2]?.textContent||'Customer',cells[3]?.textContent||'Unknown',row.dataset.status||'Unknown');
+  }else userManage(name);
+ });
+ return {openCommand,closeCommand,renderCommands,runCommand,commandKey,toggleTheme,toggleCompact,customize,applyWidgets,closeModal,userPreview,selectAll,bulkAction,confirmDemoBulk,integrationNotes};
+})();
+
+</script>
+</body>
+</html>
